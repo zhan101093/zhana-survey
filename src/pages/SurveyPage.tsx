@@ -44,95 +44,131 @@ export default function SurveyPage() {
   }
 
   return (
-    <div className="bg-survey flex flex-col items-center justify-center min-h-screen p-4 py-10">
+    <div
+      className="bg-survey flex flex-col items-center min-h-screen"
+      style={{ padding: '24px 16px 32px' }}
+    >
       {/* Floating blobs */}
       <div
         aria-hidden="true"
         style={{
-          position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0,
+          position: 'fixed', inset: 0, overflow: 'hidden',
+          pointerEvents: 'none', zIndex: 0,
         }}
       >
         <div style={{
-          position: 'absolute', top: '-10rem', right: '-8rem',
-          width: '26rem', height: '26rem',
-          background: 'rgba(255,182,210,0.25)', borderRadius: '50%', filter: 'blur(60px)',
+          position: 'absolute', top: '-8rem', right: '-6rem',
+          width: '20rem', height: '20rem',
+          background: 'rgba(255,182,210,0.25)', borderRadius: '50%', filter: 'blur(55px)',
         }} />
         <div style={{
-          position: 'absolute', bottom: '-10rem', left: '-8rem',
-          width: '26rem', height: '26rem',
-          background: 'rgba(216,180,254,0.22)', borderRadius: '50%', filter: 'blur(60px)',
-        }} />
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-          width: '32rem', height: '32rem',
-          background: 'rgba(255,228,240,0.15)', borderRadius: '50%', filter: 'blur(80px)',
+          position: 'absolute', bottom: '-8rem', left: '-6rem',
+          width: '20rem', height: '20rem',
+          background: 'rgba(216,180,254,0.22)', borderRadius: '50%', filter: 'blur(55px)',
         }} />
       </div>
 
-      <div className="relative w-full max-w-xl z-10">
+      <div className="relative w-full z-10" style={{ maxWidth: 560 }}>
+
         {/* Brand header */}
-        <div className="text-center mb-7">
-          <p className="text-sm font-medium text-pink-400 tracking-widest uppercase mb-1">✨ Шамшат ұстаз ✨</p>
-          <h1 className="text-3xl font-bold pink-gradient-text">Сауалнама</h1>
+        <div className="text-center" style={{ marginBottom: 20 }}>
+          <p style={{
+            fontSize: 11, fontWeight: 600, letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: '#F472B6', marginBottom: 6,
+          }}>
+            ✨ Шамшат ұстаз ✨
+          </p>
+          <h1 style={{
+            fontSize: 'clamp(22px, 6vw, 30px)',
+            fontWeight: 800,
+            lineHeight: 1.2,
+            background: 'linear-gradient(135deg, #FF6B9D 0%, #C44B8A 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            display: 'inline-block',
+            paddingBottom: 2,
+          }}>
+            Сауалнама
+          </h1>
         </div>
 
         {/* Progress */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs font-semibold text-pink-400 uppercase tracking-wide">Прогресс</span>
-            <span className="text-xs font-bold text-pink-600">{currentIndex + 1} / {questions.length}</span>
+        <div style={{ marginBottom: 16 }}>
+          <div className="flex justify-between items-center" style={{ marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#F472B6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Прогресс
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#C44B8A' }}>
+              {currentIndex + 1} / {questions.length}
+            </span>
           </div>
-          <div className="w-full h-2.5 bg-pink-100 rounded-full overflow-hidden">
-            <div className="progress-fill h-full rounded-full" style={{ width: `${progress}%` }} />
+          <div style={{ width: '100%', height: 8, background: '#FCE7F3', borderRadius: 99, overflow: 'hidden' }}>
+            <div className="progress-fill" style={{ height: '100%', borderRadius: 99, width: `${progress}%` }} />
           </div>
         </div>
 
         {/* Question card */}
-        <div key={animKey} className="glass-card rounded-3xl p-8 fade-in-up">
+        <div
+          key={animKey}
+          className="glass-card fade-in-up"
+          style={{ borderRadius: 24, padding: 'clamp(16px, 4vw, 32px)' }}
+        >
           {/* Badge */}
-          <span
-            className="inline-block text-xs font-bold text-white px-3 py-1 rounded-full mb-4"
-            style={{ background: 'linear-gradient(135deg, #FF6B9D, #C44B8A)' }}
-          >
+          <span style={{
+            display: 'inline-block',
+            fontSize: 11, fontWeight: 700, color: 'white',
+            padding: '4px 12px', borderRadius: 99, marginBottom: 12,
+            background: 'linear-gradient(135deg, #FF6B9D, #C44B8A)',
+          }}>
             {currentIndex + 1}-сұрақ
           </span>
 
           {/* Question text */}
-          <h2 className="text-lg font-semibold text-gray-800 leading-relaxed mb-6">
+          <h2 style={{
+            fontSize: 'clamp(14px, 4vw, 18px)',
+            fontWeight: 600,
+            color: '#1F2937',
+            lineHeight: 1.6,
+            marginBottom: 20,
+          }}>
             {question.text}
           </h2>
 
           {/* Radio options */}
           {question.type === 'radio' && question.options && (
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {question.options.map(opt => (
                 <button
                   key={opt.id}
                   type="button"
                   onClick={() => selectOption(opt.label)}
-                  className={`option-btn flex items-center gap-3 px-4 py-3.5 rounded-2xl ${
-                    answer === opt.label ? 'chosen' : ''
-                  }`}
+                  className={`option-btn ${answer === opt.label ? 'chosen' : ''}`}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '11px 14px', borderRadius: 16,
+                  }}
                 >
-                  {/* Radio circle */}
-                  <span
-                    style={{
-                      width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                      border: answer === opt.label ? '2px solid #C44B8A' : '2px solid #FFB3D1',
-                      background: answer === opt.label
-                        ? 'linear-gradient(135deg, #FF6B9D, #C44B8A)'
-                        : 'white',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.2s',
-                    }}
-                  >
+                  <span style={{
+                    width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                    border: answer === opt.label ? '2px solid #C44B8A' : '2px solid #FFB3D1',
+                    background: answer === opt.label
+                      ? 'linear-gradient(135deg, #FF6B9D, #C44B8A)'
+                      : 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}>
                     {answer === opt.label && (
                       <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'white' }} />
                     )}
                   </span>
-                  <span className={`text-sm font-medium leading-snug ${
-                    answer === opt.label ? 'text-pink-700' : 'text-gray-700'
-                  }`}>
+                  <span style={{
+                    fontSize: 'clamp(13px, 3.5vw, 15px)',
+                    fontWeight: 500,
+                    lineHeight: 1.4,
+                    color: answer === opt.label ? '#9D174D' : '#374151',
+                    textAlign: 'left',
+                  }}>
                     {opt.label}
                   </span>
                 </button>
@@ -147,18 +183,29 @@ export default function SurveyPage() {
               onChange={e => selectOption(e.target.value)}
               placeholder="Жауабыңызды осында жазыңыз..."
               rows={4}
-              className="w-full rounded-2xl p-4 text-sm text-gray-700 resize-none focus:outline-none transition-colors"
               style={{
-                border: '2px solid',
-                borderColor: answer ? '#FF6B9D' : 'rgba(255,182,210,0.5)',
+                width: '100%',
+                borderRadius: 16,
+                padding: 14,
+                fontSize: 16,
+                color: '#374151',
+                resize: 'none',
+                outline: 'none',
+                border: `2px solid ${answer ? '#FF6B9D' : 'rgba(255,182,210,0.5)'}`,
                 background: 'rgba(255, 240, 247, 0.5)',
                 fontFamily: 'inherit',
+                lineHeight: 1.5,
+                boxSizing: 'border-box',
+                transition: 'border-color 0.2s',
               }}
             />
           )}
 
-          {/* Next / Submit button */}
-          <div className="flex justify-between items-center mt-8">
+          {/* Navigation buttons */}
+          <div
+            className="flex items-center"
+            style={{ marginTop: 20, justifyContent: 'space-between' }}
+          >
             {currentIndex > 0 ? (
               <button
                 type="button"
@@ -166,7 +213,11 @@ export default function SurveyPage() {
                   setCurrentIndex(i => i - 1)
                   setAnimKey(k => k + 1)
                 }}
-                className="text-sm text-pink-400 hover:text-pink-600 font-medium transition-colors flex items-center gap-1"
+                style={{
+                  fontSize: 13, fontWeight: 500, color: '#F472B6',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 4, padding: '8px 0',
+                }}
               >
                 ← Артқа
               </button>
@@ -178,7 +229,13 @@ export default function SurveyPage() {
               type="button"
               onClick={handleNext}
               disabled={!canProceed}
-              className="pink-btn text-white font-semibold px-7 py-3 rounded-2xl flex items-center gap-2 text-sm"
+              className="pink-btn"
+              style={{
+                color: 'white', fontWeight: 600,
+                padding: '11px 24px', borderRadius: 16,
+                fontSize: 14,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}
             >
               {isLast ? 'Жіберу' : 'Далее'}
               <span>{isLast ? '✓' : '→'}</span>
@@ -187,7 +244,13 @@ export default function SurveyPage() {
         </div>
 
         {/* Dot indicators */}
-        <div className="flex justify-center mt-5 gap-1.5" aria-hidden="true">
+        <div
+          aria-hidden="true"
+          style={{
+            display: 'flex', justifyContent: 'center',
+            gap: 6, marginTop: 16, flexWrap: 'wrap',
+          }}
+        >
           {questions.map((_, i) => (
             <div
               key={i}
@@ -201,10 +264,12 @@ export default function SurveyPage() {
                     ? 'linear-gradient(90deg, #FF6B9D, #C44B8A)'
                     : 'rgba(255,182,210,0.35)',
                 transition: 'all 0.35s cubic-bezier(0.4,0,0.2,1)',
+                flexShrink: 0,
               }}
             />
           ))}
         </div>
+
       </div>
     </div>
   )
