@@ -7,9 +7,16 @@ import type { SurveyResponse } from '../types'
 const ADMIN_PASSWORD = 'admin2024'
 
 const PALETTE = [
-  '#FF6B9D', '#C44B8A', '#FF85B3', '#E91E8C',
-  '#FF4D8B', '#D63BAA', '#FF9BC7', '#B5368A',
-  '#FFAFD5', '#9C2378',
+  '#FF6B9D', // қызғылт
+  '#6C63FF', // күлгін
+  '#00C9A7', // жасыл-бирюза
+  '#FF9F43', // қызғылт-сары
+  '#4ECDC4', // ашық көк
+  '#FF6348', // қызыл-қызғылт
+  '#1DD1A1', // жасыл
+  '#5F27CD', // қою күлгін
+  '#FED330', // сары
+  '#2E86DE', // көк
 ]
 
 interface StatItem {
@@ -135,49 +142,49 @@ function StatCard({ stat, mode, index }: StatCardProps) {
         </div>
       ) : mode === 'pie' ? (
         /* ── PIE MODE ── */
-        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ flexShrink: 0 }}>
-            <ResponsiveContainer width={220} height={220}>
-              <PieChart>
-                <Pie
-                  data={stat.items}
-                  dataKey="count"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={95}
-                  paddingAngle={2}
-                >
-                  {stat.items.map((_, i) => (
-                    <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={(props) => <PieTip {...(props as PieTipProps)} />} />
-              </PieChart>
-            </ResponsiveContainer>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', overflow: 'hidden' }}>
+          {/* Pie chart — fixed size, never wraps */}
+          <div style={{ flexShrink: 0, width: 160, height: 160 }}>
+            <PieChart width={160} height={160}>
+              <Pie
+                data={stat.items}
+                dataKey="count"
+                cx={80}
+                cy={80}
+                outerRadius={72}
+                paddingAngle={2}
+              >
+                {stat.items.map((_, i) => (
+                  <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+                ))}
+              </Pie>
+              <Tooltip content={(props) => <PieTip {...(props as PieTipProps)} />} />
+            </PieChart>
           </div>
 
-          {/* Legend */}
-          <div style={{ flex: 1, minWidth: 180 }}>
+          {/* Legend — always to the right of pie */}
+          <div style={{ flex: 1, minWidth: 0 }}>
             {stat.items.map((item, i) => (
               <div key={i} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                marginBottom: 12,
+                display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9,
               }}>
                 <span style={{
-                  width: 14, height: 14, borderRadius: 4, flexShrink: 0,
+                  width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
                   background: PALETTE[i % PALETTE.length],
                 }} />
-                <span style={{ flex: 1, fontSize: 13, color: '#374151', lineHeight: 1.4 }}>
+                <span style={{
+                  flex: 1, fontSize: 'clamp(11px,2.5vw,13px)',
+                  color: '#374151', lineHeight: 1.3,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }} title={item.name}>
                   {item.name}
                 </span>
                 <span style={{
-                  fontSize: 14, fontWeight: 700, color: '#C44B8A',
-                  flexShrink: 0, minWidth: 36, textAlign: 'right',
+                  fontSize: 13, fontWeight: 800,
+                  color: PALETTE[i % PALETTE.length],
+                  flexShrink: 0, marginLeft: 4,
                 }}>
                   {item.percentage}%
-                </span>
-                <span style={{ fontSize: 12, color: '#9CA3AF', flexShrink: 0, minWidth: 28, textAlign: 'right' }}>
-                  ({item.count})
                 </span>
               </div>
             ))}
@@ -395,29 +402,24 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Summary */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 28,
-        }}>
-          {[
-            { emoji: '👥', value: responses.length, label: 'Қатысушылар' },
-            { emoji: '💬', value: textQ11.length, label: '11-сұрақ' },
-            { emoji: '❓', value: textQ12.length, label: '12-сұрақ' },
-          ].map(({ emoji, value, label }) => (
-            <div key={label} style={{
-              background: 'rgba(255,255,255,0.9)', border: '1.5px solid rgba(255,182,210,0.35)',
-              borderRadius: 20, padding: '18px 12px', textAlign: 'center',
-              boxShadow: '0 2px 12px rgba(196,75,138,0.06)',
-            }}>
-              <div style={{ fontSize: 24, marginBottom: 4 }}>{emoji}</div>
+        {/* Summary — total only */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 14,
+            background: 'rgba(255,255,255,0.9)', border: '1.5px solid rgba(255,182,210,0.35)',
+            borderRadius: 20, padding: '14px 24px',
+            boxShadow: '0 2px 12px rgba(196,75,138,0.06)',
+          }}>
+            <span style={{ fontSize: 28 }}>👥</span>
+            <div>
               <div style={{
-                fontSize: 32, fontWeight: 800, lineHeight: 1,
+                fontSize: 36, fontWeight: 800, lineHeight: 1,
                 background: 'linear-gradient(135deg,#FF6B9D,#C44B8A)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              }}>{value}</div>
-              <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>{label}</div>
+              }}>{responses.length}</div>
+              <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>қатысушы</div>
             </div>
-          ))}
+          </div>
         </div>
 
         {/* Loading */}
