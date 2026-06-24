@@ -1,5 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+} from 'recharts'
 import { questions } from '../data/questions'
 import { getResponses, clearResponses } from '../utils/storage'
 import type { SurveyResponse } from '../types'
@@ -95,6 +98,63 @@ function PieTip({ active, payload }: PieTipProps) {
   )
 }
 
+// ─── Pie label around circumference ─────────────────────
+
+interface PieLabelProps {
+  cx: number
+  cy: number
+  midAngle: number
+  outerRadius: number
+  percent: number
+  name: string
+  index: number
+}
+
+function PieOuterLabel({ cx, cy, midAngle, outerRadius, percent, name, index }: PieLabelProps) {
+  if (percent < 0.03) return null
+  const R = Math.PI / 180
+  const radius = outerRadius + 42
+  const x = cx + radius * Math.cos(-midAngle * R)
+  const y = cy + radius * Math.sin(-midAngle * R)
+  const short = name.length > 14 ? name.slice(0, 14) + '…' : name
+  const color = PALETTE[index % PALETTE.length]
+  return (
+    <text
+      x={x} y={y}
+      fill={color}
+      textAnchor={x > cx ? 'start' : 'end'}
+      dominantBaseline="central"
+      fontSize={11}
+      fontWeight={700}
+    >
+      {short} · {Math.round(percent * 100)}%
+    </text>
+  )
+}
+
+// ─── Bar tooltip ─────────────────────────────────────────
+
+interface BarTipProps {
+  active?: boolean
+  payload?: Array<{ payload: StatItem & { n: number } }>
+}
+
+function BarTip({ active, payload }: BarTipProps) {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload
+  return (
+    <div style={{
+      background: 'white', border: '1.5px solid rgba(255,182,210,0.5)',
+      borderRadius: 12, padding: '10px 14px', fontSize: 13,
+      boxShadow: '0 4px 16px rgba(196,75,138,0.12)', maxWidth: 220,
+    }}>
+      <p style={{ fontWeight: 600, color: '#374151', marginBottom: 4, lineHeight: 1.4 }}>{d.name}</p>
+      <p style={{ color: '#C44B8A', fontWeight: 700 }}>{d.percentage}%</p>
+      <p style={{ color: '#9CA3AF' }}>{d.count} жауап</p>
+    </div>
+  )
+}
+
 // ─── Question Card ───────────────────────────────────────
 
 interface StatCardProps {
@@ -105,7 +165,10 @@ interface StatCardProps {
 
 function StatCard({ stat, mode, index }: StatCardProps) {
   const sorted = [...stat.items].sort((a, b) => b.count - a.count)
-  const displayItems = mode === 'pie' ? stat.items : sorted
+  const barData = sorted.map(item => ({
+    ...item,
+    n: stat.items.findIndex(x => x.name === item.name) + 1,
+  }))
 
   return (
     <div style={{
@@ -115,13 +178,11 @@ function StatCard({ stat, mode, index }: StatCardProps) {
       padding: 'clamp(20px,4vw,32px)',
       boxShadow: '0 4px 24px rgba(196,75,138,0.07)',
     }}>
-      {/* Question header */}
       <div style={{ marginBottom: 6 }}>
         <span style={{
           fontSize: 11, fontWeight: 700, color: 'white',
           padding: '3px 10px', borderRadius: 99,
           background: 'linear-gradient(135deg, #FF6B9D, #C44B8A)',
-          marginRight: 8,
         }}>
           {index}-сұрақ
         </span>
@@ -132,7 +193,7 @@ function StatCard({ stat, mode, index }: StatCardProps) {
       }}>
         {stat.questionText}
       </h3>
-      <p style={{ fontSize: 13, color: '#F472B6', marginBottom: 24 }}>
+      <p style={{ fontSize: 13, color: '#F472B6', marginBottom: 20 }}>
         {stat.total} жауап
       </p>
 
@@ -140,94 +201,81 @@ function StatCard({ stat, mode, index }: StatCardProps) {
         <div style={{ textAlign: 'center', padding: '32px 0', color: '#D1D5DB', fontSize: 14 }}>
           Әлі жауап жоқ
         </div>
-      ) : mode === 'pie' ? (
-        /* ── PIE MODE ── */
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center', overflow: 'hidden' }}>
-          {/* Pie chart — fixed size, never wraps */}
-          <div style={{ flexShrink: 0, width: 160, height: 160 }}>
-            <PieChart width={160} height={160}>
-              <Pie
-                data={stat.items}
-                dataKey="count"
-                cx={80}
-                cy={80}
-                outerRadius={72}
-                paddingAngle={2}
-              >
-                {stat.items.map((_, i) => (
-                  <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={(props) => <PieTip {...(props as PieTipProps)} />} />
-            </PieChart>
-          </div>
 
-          {/* Legend — always to the right of pie */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {stat.items.map((item, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9,
-              }}>
+      ) : mode === 'pie' ? (
+        /* ── ДОңГАЛАҚ — labels around circumference ── */
+        <ResponsiveContainer width="100%" height={320}>
+          <PieChart>
+            <Pie
+              data={stat.items}
+              dataKey="count"
+              cx="50%"
+              cy="50%"
+              outerRadius={90}
+              paddingAngle={2}
+              label={(props: PieLabelProps) => <PieOuterLabel {...props} />}
+              labelLine={{ stroke: '#E5E7EB', strokeWidth: 1 }}
+            >
+              {stat.items.map((_, i) => (
+                <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+              ))}
+            </Pie>
+            <Tooltip content={(props) => <PieTip {...(props as PieTipProps)} />} />
+          </PieChart>
+        </ResponsiveContainer>
+
+      ) : (
+        /* ── ГРАФИК — vertical bars ── */
+        <>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={barData} barCategoryGap="30%">
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+              <XAxis
+                dataKey="n"
+                tick={{ fontSize: 13, fill: '#9CA3AF', fontWeight: 600 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                domain={[0, 100]}
+                tickFormatter={v => `${v}%`}
+                tick={{ fontSize: 11, fill: '#9CA3AF' }}
+                axisLine={false}
+                tickLine={false}
+                width={38}
+              />
+              <Tooltip content={(props) => <BarTip {...(props as BarTipProps)} />} />
+              <Bar dataKey="percentage" radius={[8, 8, 0, 0]}>
+                {barData.map((item) => (
+                  <Cell key={item.n} fill={PALETTE[(item.n - 1) % PALETTE.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+
+          {/* Legend: number → option name */}
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {barData.map(item => (
+              <div key={item.n} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span style={{
-                  width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
-                  background: PALETTE[i % PALETTE.length],
-                }} />
-                <span style={{
-                  flex: 1, fontSize: 'clamp(11px,2.5vw,13px)',
-                  color: '#374151', lineHeight: 1.3,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }} title={item.name}>
+                  fontSize: 12, fontWeight: 800, flexShrink: 0, minWidth: 20,
+                  color: PALETTE[(item.n - 1) % PALETTE.length],
+                }}>
+                  {item.n}.
+                </span>
+                <span style={{ fontSize: 13, color: '#374151', flex: 1, lineHeight: 1.4 }}>
                   {item.name}
                 </span>
                 <span style={{
-                  fontSize: 13, fontWeight: 800,
-                  color: PALETTE[i % PALETTE.length],
-                  flexShrink: 0, marginLeft: 4,
+                  fontSize: 13, fontWeight: 700, flexShrink: 0,
+                  color: PALETTE[(item.n - 1) % PALETTE.length],
                 }}>
                   {item.percentage}%
                 </span>
               </div>
             ))}
           </div>
-        </div>
-      ) : (
-        /* ── BAR MODE ── */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {displayItems.map((item, i) => {
-            const colorIdx = stat.items.findIndex(x => x.name === item.name)
-            const color = PALETTE[colorIdx % PALETTE.length]
-            return (
-              <div key={i}>
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  alignItems: 'baseline', marginBottom: 6, gap: 8,
-                }}>
-                  <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.4, flex: 1 }}>
-                    {item.name}
-                  </span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color, flexShrink: 0 }}>
-                    {item.percentage}%
-                  </span>
-                  <span style={{ fontSize: 12, color: '#9CA3AF', flexShrink: 0, minWidth: 40, textAlign: 'right' }}>
-                    {item.count} жауап
-                  </span>
-                </div>
-                <div style={{
-                  height: 10, borderRadius: 99,
-                  background: 'rgba(255,182,210,0.2)',
-                  overflow: 'hidden',
-                }}>
-                  <div style={{
-                    height: '100%', borderRadius: 99,
-                    width: `${item.percentage}%`,
-                    background: color,
-                    transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)',
-                  }} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        </>
       )}
     </div>
   )
@@ -366,7 +414,7 @@ export default function AdminPage() {
               display: 'flex', background: 'rgba(255,255,255,0.8)',
               border: '1.5px solid rgba(255,182,210,0.4)', borderRadius: 16, padding: 4,
             }}>
-              {([['pie', '🍩 Диаграмма'], ['bar', '📊 Кесте']] as const).map(([m, label]) => (
+              {([['pie', '🍩 Диаграмма'], ['bar', '📊 График']] as const).map(([m, label]) => (
                 <button
                   key={m}
                   type="button"
