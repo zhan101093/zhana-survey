@@ -180,13 +180,18 @@ export default function SurveyPage() {
           {question.type === 'text' && (
             <textarea
               value={answer}
-              onChange={e => selectOption(e.target.value)}
+              onChange={e => {
+                selectOption(e.target.value)
+                e.target.style.height = 'auto'
+                e.target.style.height = e.target.scrollHeight + 'px'
+              }}
               placeholder="Жауабыңызды осында жазыңыз..."
-              rows={4}
+              rows={6}
               style={{
                 width: '100%',
+                minHeight: 140,
                 borderRadius: 16,
-                padding: 14,
+                padding: 16,
                 fontSize: 16,
                 color: '#374151',
                 resize: 'none',
@@ -194,9 +199,10 @@ export default function SurveyPage() {
                 border: `2px solid ${answer ? '#FF6B9D' : 'rgba(255,182,210,0.5)'}`,
                 background: 'rgba(255, 240, 247, 0.5)',
                 fontFamily: 'inherit',
-                lineHeight: 1.5,
+                lineHeight: 1.7,
                 boxSizing: 'border-box',
                 transition: 'border-color 0.2s',
+                overflow: 'hidden',
               }}
             />
           )}
