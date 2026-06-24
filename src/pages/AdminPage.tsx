@@ -98,37 +98,88 @@ function PieTip({ active, payload }: PieTipProps) {
   )
 }
 
-// ─── Pie label around circumference ─────────────────────
+// ─── Pie labels: % inside + full text outside ────────────
+
+function wrapText(text: string, maxChars: number): string[] {
+  const words = text.split(' ')
+  const lines: string[] = []
+  let current = ''
+  for (const word of words) {
+    const next = current ? current + ' ' + word : word
+    if (next.length > maxChars && current) {
+      lines.push(current)
+      current = word
+    } else {
+      current = next
+    }
+  }
+  if (current) lines.push(current)
+  return lines
+}
 
 interface PieLabelProps {
   cx: number
   cy: number
   midAngle: number
+  innerRadius: number
   outerRadius: number
   percent: number
   name: string
   index: number
+  colorIndex: number
 }
 
-function PieOuterLabel({ cx, cy, midAngle, outerRadius, percent, name, index }: PieLabelProps) {
-  if (percent < 0.03) return null
+function CombinedLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, colorIndex }: PieLabelProps) {
+  if (percent < 0.01) return null
   const R = Math.PI / 180
-  const radius = outerRadius + 42
-  const x = cx + radius * Math.cos(-midAngle * R)
-  const y = cy + radius * Math.sin(-midAngle * R)
-  const short = name.length > 14 ? name.slice(0, 14) + '…' : name
-  const color = PALETTE[index % PALETTE.length]
+  const color = PALETTE[colorIndex % PALETTE.length]
+
+  // Inside: percentage
+  const innerMid = innerRadius + (outerRadius - innerRadius) * 0.52
+  const xi = cx + innerMid * Math.cos(-midAngle * R)
+  const yi = cy + innerMid * Math.sin(-midAngle * R)
+
+  // Outside: full text
+  const textR = outerRadius + 58
+  const xo = cx + textR * Math.cos(-midAngle * R)
+  const yo = cy + textR * Math.sin(-midAngle * R)
+  const anchor = xo > cx ? 'start' : 'end'
+
+  // Line: edge → knee → text start
+  const xe = cx + (outerRadius + 4) * Math.cos(-midAngle * R)
+  const ye = cy + (outerRadius + 4) * Math.sin(-midAngle * R)
+  const xk = cx + (outerRadius + 16) * Math.cos(-midAngle * R)
+  const yk = cy + (outerRadius + 16) * Math.sin(-midAngle * R)
+
+  const lines = wrapText(name, 18)
+  const lineH = 14
+
   return (
-    <text
-      x={x} y={y}
-      fill={color}
-      textAnchor={x > cx ? 'start' : 'end'}
-      dominantBaseline="central"
-      fontSize={11}
-      fontWeight={700}
-    >
-      {short} · {Math.round(percent * 100)}%
-    </text>
+    <g>
+      {/* Colored leader line */}
+      <polyline
+        points={`${xe},${ye} ${xk},${yk} ${xo},${yo}`}
+        stroke={color} strokeWidth={1.3} fill="none" opacity={0.75}
+      />
+      {/* % inside slice */}
+      {percent >= 0.06 && (
+        <text
+          x={xi} y={yi} fill="white"
+          textAnchor="middle" dominantBaseline="central"
+          fontSize={13} fontWeight={800}
+        >
+          {Math.round(percent * 100)}%
+        </text>
+      )}
+      {/* Full option name outside */}
+      <text fill={color} textAnchor={anchor} fontSize={11} fontWeight={600}>
+        {lines.map((line, i) => (
+          <tspan key={i} x={xo} y={yo + (i - (lines.length - 1) / 2) * lineH}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    </g>
   )
 }
 
@@ -203,26 +254,34 @@ function StatCard({ stat, mode, index }: StatCardProps) {
         </div>
 
       ) : mode === 'pie' ? (
-        /* ── ДОңГАЛАҚ — labels around circumference ── */
-        <ResponsiveContainer width="100%" height={320}>
-          <PieChart>
-            <Pie
-              data={stat.items}
-              dataKey="count"
-              cx="50%"
-              cy="50%"
-              outerRadius={90}
-              paddingAngle={2}
-              label={(props: PieLabelProps) => <PieOuterLabel {...props} />}
-              labelLine={{ stroke: '#E5E7EB', strokeWidth: 1 }}
-            >
-              {stat.items.map((_, i) => (
-                <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
-              ))}
-            </Pie>
-            <Tooltip content={(props) => <PieTip {...(props as PieTipProps)} />} />
-          </PieChart>
-        </ResponsiveContainer>
+        /* ── ДОҢҒАЛАҚ — % inside, full text outside ── */
+        (() => {
+          // filter zeros → no white gaps
+          const pieItems = stat.items
+            .map((item, i) => ({ ...item, colorIndex: i }))
+            .filter(item => item.count > 0)
+          return (
+            <ResponsiveContainer width="100%" height={380}>
+              <PieChart>
+                <Pie
+                  data={pieItems}
+                  dataKey="count"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={95}
+                  paddingAngle={3}
+                  labelLine={false}
+                  label={(props: PieLabelProps) => <CombinedLabel {...props} />}
+                >
+                  {pieItems.map(item => (
+                    <Cell key={item.colorIndex} fill={PALETTE[item.colorIndex % PALETTE.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={(props) => <PieTip {...(props as PieTipProps)} />} />
+              </PieChart>
+            </ResponsiveContainer>
+          )
+        })()
 
       ) : (
         /* ── ГРАФИК — vertical bars ── */
