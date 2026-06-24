@@ -71,7 +71,7 @@ app.delete('/api/responses', async (_req, res) => {
 })
 
 // SPA fallback
-app.get('*', (_req, res) => {
+app.get('/{*path}', (_req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'))
 })
 
