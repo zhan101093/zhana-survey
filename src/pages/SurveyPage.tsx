@@ -9,6 +9,7 @@ export default function SurveyPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [animKey, setAnimKey] = useState(0)
+  const [saving, setSaving] = useState(false)
 
   const question = questions[currentIndex]
   const isLast = currentIndex === questions.length - 1
@@ -20,8 +21,8 @@ export default function SurveyPage() {
     setAnswers(prev => ({ ...prev, [question.id]: value }))
   }
 
-  function handleNext() {
-    if (!canProceed) return
+  async function handleNext() {
+    if (!canProceed || saving) return
 
     if (isLast) {
       const answerList: Answer[] = Object.entries(answers).map(([qId, value]) => ({
@@ -33,7 +34,8 @@ export default function SurveyPage() {
         timestamp: Date.now(),
         answers: answerList,
       }
-      saveResponse(response)
+      setSaving(true)
+      await saveResponse(response)
       navigate('/thank-you')
       return
     }
@@ -234,7 +236,7 @@ export default function SurveyPage() {
             <button
               type="button"
               onClick={handleNext}
-              disabled={!canProceed}
+              disabled={!canProceed || saving}
               className="pink-btn"
               style={{
                 color: 'white', fontWeight: 600,
@@ -243,8 +245,8 @@ export default function SurveyPage() {
                 display: 'flex', alignItems: 'center', gap: 8,
               }}
             >
-              {isLast ? 'Жіберу' : 'Далее'}
-              <span>{isLast ? '✓' : '→'}</span>
+              {saving ? 'Жіберілуде...' : isLast ? 'Жіберу' : 'Далее'}
+              <span>{saving ? '⏳' : isLast ? '✓' : '→'}</span>
             </button>
           </div>
         </div>

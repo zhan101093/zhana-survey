@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
@@ -315,8 +315,16 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [mode, setMode] = useState<'donut' | 'bar'>('donut')
   const [tick, setTick] = useState(0)
+  const [responses, setResponses] = useState<SurveyResponse[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const responses = useMemo(() => getResponses(), [tick])
+  useEffect(() => {
+    setLoading(true)
+    getResponses()
+      .then(data => setResponses(data))
+      .finally(() => setLoading(false))
+  }, [tick])
+
   const stats = useMemo(() => buildStats(responses), [responses])
   const textQ11 = useMemo(() => getTextAnswers(responses, 11), [responses])
   const textQ12 = useMemo(() => getTextAnswers(responses, 12), [responses])
@@ -325,8 +333,7 @@ export default function AdminPage() {
 
   function handleClear() {
     if (window.confirm('Барлық жауаптарды жою керек пе?')) {
-      clearResponses()
-      setTick(t => t + 1)
+      clearResponses().then(() => setTick(t => t + 1))
     }
   }
 
@@ -425,6 +432,13 @@ export default function AdminPage() {
             </button>
           </div>
         </div>
+
+        {/* Loading indicator */}
+        {loading && (
+          <div className="text-center py-16 text-pink-400 font-medium">
+            Жүктелуде...
+          </div>
+        )}
 
         {/* Summary row */}
         <div className="grid grid-cols-3 gap-4 mb-8">

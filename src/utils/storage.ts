@@ -1,26 +1,21 @@
 import type { SurveyResponse } from '../types'
 
-const KEY = 'zhana_survey_v1'
-
-export function saveResponse(response: SurveyResponse): void {
-  const all = getResponses()
-  all.push(response)
-  try {
-    localStorage.setItem(KEY, JSON.stringify(all))
-  } catch {
-    // Storage quota exceeded — silently ignore
-  }
+export async function saveResponse(response: SurveyResponse): Promise<void> {
+  const res = await fetch('/api/responses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(response),
+  })
+  if (!res.ok) throw new Error('Failed to save response')
 }
 
-export function getResponses(): SurveyResponse[] {
-  try {
-    const raw = localStorage.getItem(KEY)
-    return raw ? (JSON.parse(raw) as SurveyResponse[]) : []
-  } catch {
-    return []
-  }
+export async function getResponses(): Promise<SurveyResponse[]> {
+  const res = await fetch('/api/responses')
+  if (!res.ok) throw new Error('Failed to fetch responses')
+  return res.json() as Promise<SurveyResponse[]>
 }
 
-export function clearResponses(): void {
-  localStorage.removeItem(KEY)
+export async function clearResponses(): Promise<void> {
+  const res = await fetch('/api/responses', { method: 'DELETE' })
+  if (!res.ok) throw new Error('Failed to clear responses')
 }
