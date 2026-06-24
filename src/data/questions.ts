@@ -105,6 +105,7 @@ export const questions: Question[] = [
       { id: '9a', label: 'Мен бәрін өзім жасауым керек' },
       { id: '9b', label: 'Мен шаршадым' },
       { id: '9c', label: 'Мен жеткіліксізбін' },
+      { id: '9d', label: 'Менде бәрі ок' },
     ],
   },
   {
